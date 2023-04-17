@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Define variables
+USER="smilambo"
+LOG_FILE="/var/log/secure"
+
+# Check for failed login attempts
+if grep -q "authentication failure" $LOG_FILE; then
+  echo "RED FLAG ALERT - Failed login attempts detected"
+fi
+
+# Check for logins between midnight and 6am
+if grep -q "$(date +%Y-%m-%d)\T[0-5]" $LOG_FILE; then
+  echo "Suspicious activity detected between midnight and 6am"
+fi
+
+# Check for logins for specific user
+if grep -q "$USER" $LOG_FILE; then
+  echo "Suspicious activity detected for user $USER"
+fi
+
+# Add any other behavior that should send up a red flag here
+# ...
+
+# Output list of IPs attempting to gain access
+echo "IP addresses attempting to gain access:"
+grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" $LOG_FILE | sort | uniq
