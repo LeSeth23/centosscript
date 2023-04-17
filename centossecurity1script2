@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Set the directory to monitor and the file to save the SHA1 checksums
+DIRECTORY="/var/log"
+SHA1SUM_FILE="/tmp/directory-monitor.sha1sum"
+
+# If the SHA1SUM file doesn't exist, create it by computing the SHA1 checksums of all files in the monitored directory
+if [[ ! -f $SHA1SUM_FILE ]]; then
+    echo "Creating SHA1SUM file..."
+    find "$DIRECTORY" -type f -print0 | xargs -0 sha1sum > "$SHA1SUM_FILE"
+fi
+
+# Display a message indicating that the script is monitoring the directory for changes
+echo "Monitoring $DIRECTORY for changes..."
+
+# Enter an infinite loop to monitor the directory for changes
+while true; do
+    # Compute the SHA1 checksums of all files in the monitored directory
+    CURRENT_SUM=$(find "$DIRECTORY" -type f -print0 | xargs -0 sha1sum)
+    
+    # Compare the current SHA1 checksums to the saved SHA1 checksums using the diff command
+    if ! diff -q "$SHA1SUM_FILE" <(echo "$CURRENT_SUM"); then
+        # If there are differences, display a message indicating that changes have been detected and update the SHA1SUM file with the current SHA1 checksums
+        echo "Changes detected!"
+        find "$DIRECTORY" -type f -print0 | xargs -0 sha1sum > "$SHA1SUM_FILE"
+    fi
+    
+    # Wait for 5 seconds before repeating the loop
+    sleep 5
+done
